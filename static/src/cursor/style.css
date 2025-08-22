@@ -1,0 +1,26 @@
+.heart {
+    position: fixed;
+    left: 0; top: 0;
+    transform: translate(-50%, -50%);
+    font-size: var(--size);
+    line-height: 1;
+    will-change: transform, opacity;
+    pointer-events: none;
+    z-index: 9999;
+    animation: floatUp var(--dur, 1200ms) linear forwards;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,.25));
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+@keyframes floatUp {
+    0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(.9) rotate(0deg);
+    opacity: .95;
+    }
+    100% {
+    transform: translate(-50%, -50%) translate(var(--dx, 0px), -160px) scale(1.8) rotate(-15deg);
+    opacity: 0;
+    }
+}

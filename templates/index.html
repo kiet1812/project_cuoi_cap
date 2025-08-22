@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r124/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.126.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://unpkg.com/three@0.126.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- <link rel="stylesheet" href="src/cursor/style.css"> -->
+  <link rel="stylesheet" href="{{ url_for('static' , filename='src/cursor/style.css' )}}">
+
+  <style>
+    /* Vòng tròn nền mờ */
+    .circle {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(100px);
+      opacity: 0.5;
+      animation: float 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(30px, -30px) scale(1.05); }
+      100% { transform: translate(-30px, 30px) scale(1); }
+    }
+
+    /* Navbar */
+    .navbar {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(13, 17, 23, 0.8);
+      backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 12px 24px;
+      z-index: 100;
+      width: 90%;
+      max-width: 800px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .navbar:hover {
+      background: rgba(13, 17, 23, 0.9);
+      box-shadow: 
+        0 12px 40px rgba(0, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transform: translateX(-50%) translateY(-2px);
+    }
+
+    .navbar-brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #00FFFF 0%, #FF00FF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .navbar-brand::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(135deg, #00FFFF 0%, #FF00FF 100%);
+      transition: width 0.3s ease;
+    }
+
+    .navbar-brand:hover::after {
+      width: 100%;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .nav-link {
+      position: relative;
+      padding: 10px 18px;
+      border-radius: 12px;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      overflow: hidden;
+      text-decoration: none;
+    }
+
+    .nav-link::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .nav-link:hover::before {
+      left: 100%;
+    }
+
+    .nav-link:hover {
+      color: #fff;
+      border-color: rgba(0, 255, 255, 0.5);
+      background: rgba(0, 255, 255, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 255, 255, 0.2);
+    }
+
+    .nav-link.active {
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(255, 0, 255, 0.2) 100%);
+      border-color: rgba(0, 255, 255, 0.5);
+      color: #fff;
+    }
+    /* background */
+    /* Advanced background grid */
+    .grid-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.1;
+      background-image: 
+        linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridPulse 4s ease-in-out infinite;
+      z-index: 0;
+    }
+
+    @keyframes gridPulse {
+      0%, 100% { opacity: 0.1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Floating orbs with advanced effects */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: orbFloat 8s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    .orb-1 {
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(0, 255, 255, 0.6) 0%, rgba(0, 150, 255, 0.3) 50%, transparent 70%);
+      top: 10%;
+      left: 5%;
+      animation-delay: 0s;
+    }
+
+    .orb-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255, 0, 150, 0.5) 0%, rgba(150, 0, 255, 0.3) 50%, transparent 70%);
+      bottom: 20%;
+      right: 10%;
+      animation-delay: 2s;
+    }
+
+    .orb-3 {
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(50, 255, 50, 0.4) 0%, rgba(0, 255, 150, 0.2) 50%, transparent 70%);
+      top: 60%;
+      left: 70%;
+      animation-delay: 4s;
+    }
+
+    .orb-4 {
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(255, 150, 0, 0.5) 0%, rgba(255, 50, 100, 0.3) 50%, transparent 70%);
+      top: 30%;
+      right: 30%;
+      animation-delay: 1s;
+    }
+
+    .orb-5 {
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(100, 50, 255, 0.6) 0%, rgba(0, 200, 255, 0.3) 50%, transparent 70%);
+      bottom: 40%;
+      left: 15%;
+      animation-delay: 3s;
+    }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      25% { transform: translate(30px, -20px) rotate(90deg) scale(1.1); }
+      50% { transform: translate(-20px, 40px) rotate(180deg) scale(0.9); }
+      75% { transform: translate(40px, 20px) rotate(270deg) scale(1.05); }
+    }
+
+    /* Floating tech icons */
+    .tech-icons {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .tech-icon {
+      position: absolute;
+      font-size: 2rem;
+      color: rgba(0, 255, 255, 0.3);
+      animation: techFloat 6s ease-in-out infinite;
+    }
+
+    .tech-icon:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+    .tech-icon:nth-child(2) { top: 15%; right: 15%; animation-delay: 1s; }
+    .tech-icon:nth-child(3) { bottom: 25%; left: 20%; animation-delay: 2s; }
+    .tech-icon:nth-child(4) { bottom: 30%; right: 25%; animation-delay: 3s; }
+    .tech-icon:nth-child(5) { top: 50%; left: 5%; animation-delay: 4s; }
+    .tech-icon:nth-child(6) { top: 40%; right: 5%; animation-delay: 5s; }
+
+    @keyframes techFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+      50% { transform: translateY(-20px) rotate(180deg); opacity: 0.6; }
+    }
+
+    /* responsive navbar and background */
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .navbar {
+        padding: 10px 16px;
+        width: 95%;
+      }
+      
+      .navbar-brand {
+        font-size: 1.25rem;
+      }
+      
+      .nav-link {
+        padding: 8px 14px;
+        font-size: 0.9rem;
+      }
+      
+      .nav-links {
+        gap: 4px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .nav-link {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+      }
+    }
+    /* hieu ung vay tay */
+    .wave {
+      display: inline-block;
+      transform-origin: 70% 70%;
+      animation: waveAnim 3s ease-in-out infinite;
+    }
+
+    @keyframes waveAnim {
+      0%    { transform: rotate(0deg); }
+      3%    { transform: rotate(14deg); }
+      6%    { transform: rotate(-8deg); }
+      9%    { transform: rotate(14deg); }
+      12%   { transform: rotate(-4deg); }
+      15%   { transform: rotate(10deg); }
+      33.33% { transform: rotate(0deg); }
+      100%  { transform: rotate(0deg); } /* nghỉ */
+    }
+
+    /* Nút trong suốt (Navbar) */
+    .nav-button {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background: transparent;
+      border: 2px solid transparent;
+      transition: color .3s ease, border-color .3s ease, background .3s ease;
+    }
+    .nav-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 100%;
+      background: rgba(255, 255, 255, .2);
+      transition: width .3s ease;
+      z-index: -1;
+    }
+    .nav-button:hover::before {
+      width: 100%;
+    }
+    .nav-button:hover {
+      border-color: #fff;
+      color: #fff;
+    }
+
+    /* Box */
+    .intro-box {
+      transition: transform .3s ease;
+      backdrop-filter: blur(10px);
+    }
+    .intro-box:not(.no-balloon):hover {
+      animation: balloon .6s ease;
+    }
+    .bank-box:hover {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+    @keyframes balloon {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    /* title-gradient */
+    .demo-title {
+      background: linear-gradient(135deg, #00FFFF 0%, #FF00FF 50%, #FFFF00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: titleGlow 3s ease-in-out infinite alternate;
+    }
+    @keyframes titleGlow {
+      0% { filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.5)); }
+      100% { filter: drop-shadow(0 0 40px rgba(255, 0, 255, 0.8)); }
+    }
+    /* Button Contact me */
+    .contact-button {
+      position: relative;
+      overflow: hidden;
+      color: #fff;
+      background: transparent;
+      border: 2px solid #fff;
+      transition: color .3s ease, background .3s ease;
+    }
+    .contact-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 100%;
+      background: rgba(255, 255, 255, .2);
+      transition: width .3s ease;
+      z-index: -1;
+    }
+    .contact-button:hover::before {
+      width: 100%;
+    }
+
+    /* Copy button animation */
+    .copy-btn {
+      position: relative;
+      overflow: hidden;
+      color: #fff;
+      background: transparent;
+      border: 2px solid #fff;
+      transition: color .3s ease, background .3s ease, opacity .3s ease;
+      opacity: 1;
+    }
+    .copy-btn.copied {
+      opacity: 0.7;
+      transition: opacity .3s ease;
+    }
+
+    /* Canvas for Three.js */
+    canvas.webgl {
+      width: 100%;
+      max-width: 448px;
+      height: 512px;
+      max-height: 80vh;
+      display: block;
+      box-sizing: border-box;
+    }
+
+    /* Đảm bảo SVG hiển thị tốt */
+    .max-w-md svg {
+      width: 100%;
+      height: auto;
+      min-height: 400px;
+    }
+
+    /* Animation Classes */
+    .animate-element {
+      opacity: 0;
+      transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .animate-element.animate-in {
+      opacity: 1;
+    }
+
+    .slide-left {
+      transform: translateX(-100px);
+    }
+    .slide-left.animate-in {
+      transform: translateX(0);
+    }
+
+    .slide-right {
+      transform: translateX(100px);
+    }
+    .slide-right.animate-in {
+      transform: translateX(0);
+    }
+
+    .slide-up {
+      transform: translateY(80px);
+    }
+    .slide-up.animate-in {
+      transform: translateY(0);
+    }
+
+    .slide-down {
+      transform: translateY(-80px);
+    }
+    .slide-down.animate-in {
+      transform: translateY(0);
+    }
+
+    .slide-diagonal-left {
+      transform: translate(-80px, 60px);
+    }
+    .slide-diagonal-left.animate-in {
+      transform: translate(0, 0);
+    }
+
+    .slide-diagonal-right {
+      transform: translate(80px, 60px);
+    }
+    .slide-diagonal-right.animate-in {
+      transform: translate(0, 0);
+    }
+
+    .scale-in {
+      transform: scale(0.8);
+    }
+    .scale-in.animate-in {
+      transform: scale(1);
+    }
+
+    .rotate-in {
+      transform: rotate(-10deg) scale(0.9);
+    }
+    .rotate-in.animate-in {
+      transform: rotate(0deg) scale(1);
+    }
+
+    .stagger-item {
+      opacity: 0;
+      transform: translateX(-30px);
+      transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .stagger-item.animate-in {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .floating {
+      animation: floating 3s ease-in-out infinite;
+    }
+
+    @keyframes floating {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(2deg); }
+    }
+
+    .pulse-glow {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { 
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+      }
+      50% { 
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+      }
+    }
+
+    .tooltip {
+      position: relative;
+    }
+    .tooltip .tooltip-text {
+      visibility: hidden;
+      width: 60px;
+      background-color: rgba(0, 0, 0, 0.9);
+      color: #fff;
+      text-align: center;
+      border-radius: 8px;
+      padding: 5px 0;
+      position: absolute;
+      z-index: 10;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .tooltip:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .bank-logo {
+      border-radius: 12px;
+      overflow: hidden;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+    .bank-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .tooltip rect {
+      transform-box: fill-box;
+      transform-origin: center bottom;
+      transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    }
+    
+    #percent-python, #percent-cpp, #percent-htmlcss, #percent-javascript {
+      transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), font-weight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .chart-label {
+      transform-origin: center center;
+    }
+
+    /* Welcome line styling */
+    .welcome-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#1E1E2E] relative text-white">
+  <svg style="display: none;">
+    <defs>
+      <g id="cube">
+        <use href="#cube_outline" stroke-linejoin="round" stroke-width="16" fill="url(#stars)"/>
+        <use href="#cube_base" stroke-width=".5"/>
+        <use href="#cube_outline" stroke-linejoin="round" stroke-width="6" stroke="#141417"/>
+      </g>
+      <g id="cube_outline">
+        <path>
+          <animate attributeName="d" dur="1.5s" repeatCount="indefinite" calcMode="spline"
+            keyTimes="0;0.5;0.5;1"
+            keySplines="0.8 0.2 0.6 0.9; 0.8 0.2 0.6 0.9; 0.8 0.2 0.6 0.9"
+            values="M10 64 L128 0 L246 64 L246 192 L128 256 L10 192Z;
+                  M40 20 L216 20 L216 108 L216 236 L40 236 L40 172Z;
+                  M216 20 L40 20 L40 108 L40 236 L216 236 L216 172Z;
+                  M246 64 L128 0 L10 64 L10 192 L128 256 L246 192Z"/>
+        </path>
+      </g>
+      <g id="cube_base">
+        <path fill="#fff1">
+          <animate attributeName="d" dur="1.5s" repeatCount="indefinite" calcMode="spline"
+            keyTimes="0;0.5;1"
+            keySplines="0.8 0.2 0.6 0.9; 0.8 0.2 0.6 0.9"
+            values="M10 64 L128 0 L246 64 L128 128Z;
+                  M40 20 L216 20 L216 108 L40 108Z;
+                  M128 0 L246 64 L128 128 L10 64Z"/>
+        </path>
+        <path>
+          <animate attributeName="d" dur="1.5s" repeatCount="indefinite" calcMode="spline"
+            keyTimes="0;0.5;0.5;1"
+            keySplines="0.8 0.2 0.6 0.9; 0.8 0.2 0.6 0.9; 0.8 0.2 0.6 0.9"
+            values="M10 64 L128 128 L128 256 L10 192Z;
+                  M40 20 L40 108 L40 236 L40 172Z;
+                  M216 20 L216 108 L216 236 L216 172Z;
+                  M246 64 L128 128 L128 256 L246 192Z"/>
+          <animate attributeName="fill" dur="1.5s" repeatCount="indefinite" keyTimes="0;0.5;0.5;1"
+            values="#fff0;#fff0;#fff2;#fff2"/>
+        </path>
+        <path fill="#407080">
+          <animate attributeName="d" dur="1.5s" repeatCount="indefinite" calcMode="spline"
+            keyTimes="0;0.5;1"
+            keySplines="0.8 0.2 0.6 0.9; 0.8 0.2 0.6 0.9"
+            values="M246 64 L128 128 L128 256 L246 192Z;
+                  M216 108 L40 108 L40 236 L216 236Z;
+                  M128 128 L10 64 L10 192 L128 256Z"/>
+          <animate attributeName="fill" dur="1.5s" repeatCount="indefinite" keyTimes="0;0.5;1"
+            values="#fff2;#fff1;#fff0"/>
+        </path>
+      </g>
+      <linearGradient id="sky" gradientTransform="rotate(90)">
+        <stop offset="0.5" stop-color="#141417"/>
+        <stop offset="1" stop-color="#40354a"/>
+      </linearGradient>
+      <pattern id="stars" x="0" y="0" width="50%" height="50%" patternUnits="userSpaceOnUse" patternContentUnits="userSpaceOnUse">
+        <rect width="256" height="256" fill="url(#sky)"/>
+        <use href="#star01" x="24" y="32" fill="white"/>
+        <use href="#star01" x="64" y="96" fill="#ad9dcb" transform="rotate(90 80 112)"/>
+        <use href="#star01" x="224" y="102" fill="#ad9dcb"/>
+        <use href="#star01" x="192" y="112" fill="#E0E8EA" transform="rotate(90 80 112)"/>
+        <use href="#star02" x="16" y="64" fill="#ad9dcb"/>
+        <use href="#star03" x="96" y="16" fill="#E0E8EA"/>
+        <use href="#star04" x="64" y="64" fill="white"/>
+        <use href="#star04" x="8" y="16" fill="#ad9dcb"/>
+        <use href="#star04" x="110" y="96" fill="#E0E8EA"/>
+        <use href="#star02" x="160" y="24" fill="#ad9dcb"/>
+        <use href="#star03" x="196" y="60" fill="#E0E8EA"/>
+        <use href="#star04" x="64" y="212" fill="white"/>
+        <use href="#star04" x="218" y="216" fill="#ad9dcb"/>
+        <use href="#star03" x="228" y="220" fill="#E0E8EA"/>
+        <use href="#star02" x="140" y="128" fill="#ad9dcb"/>
+        <use href="#star03" x="24" y="140" fill="#E0E8EA"/>
+        <use href="#star04" x="95" y="160" fill="white"/>
+        <use href="#star04" x="180" y="128" fill="#ad9dcb"/>
+        <use href="#star03" x="200" y="136" fill="#E0E8EA"/>
+        <use href="#star10" x="120" y="120" stroke="#E0E8EA"/>
+        <use href="#star11" x="48" y="64" stroke="#ad9dcb"/>
+      </pattern>
+      <path id="star01" transform="scale(0.5)">
+        <animate attributeName="d" dur="3s" repeatCount="indefinite" calcMode="spline"
+          keyTimes="0;0.5;1" keySplines="0.8 0.2 0.6 0.9; 0.8 0.2 0.6 0.9"
+          values="M16 0 Q16 16 24 16 Q16 16 16 32 Q16 16 8 16 Q16 16 16 0Z;
+                M16 8 Q16 16 32 16 Q16 16 16 24 Q16 16 0 16 Q16 16 16 8Z;
+                M16 0 Q16 16 24 16 Q16 16 16 32 Q16 16 8 16 Q16 16 16 0Z"/>
+      </path>
+      <circle id="star02">
+        <animate attributeName="r" dur="3s" repeatCount="indefinite" calcMode="spline"
+          keyTimes="0;0.5;1" keySplines="0.8 0.2 0.6 0.9; 0.8 0.2 0.6 0.9"
+          values="0;2;0"/>
+      </circle>
+      <circle id="star03">
+        <animate attributeName="r" dur="6s" repeatCount="indefinite" calcMode="spline"
+          keyTimes="0;0.5;1" keySplines="0.8 0.2 0.6 0.9; 0.8 0.2 0.6 0.9"
+          values="3;1;3"/>
+      </circle>
+      <circle id="star04" r="1"/>
+      <path id="star10" stroke-width="2">
+        <animate attributeName="d" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.90;0.97;1"
+          keySplines="0 0.4 1 0.2; 0 0.4 1 0.2; 0 0.4 1 0.2"
+          values="M64 0 L64 0Z; M64 0 L64 0Z; M48 12 L0 48Z; M0 48 L0 48Z"/>
+        <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.90;0.97;1"
+          values="1; 1; 0.6; 0"/>
+      </path>
+      <path id="star11" stroke-width="3">
+        <animate attributeName="d" dur="6s" repeatCount="indefinite" delay="3s"
+          keyTimes="0;0.90;0.95;1"
+          keySplines="0 0.4 1 0.2; 0 0.4 1 0.2; 0 0.4 1 0.2"
+          values="M64 0 L64 0Z; M64 0 L64 0Z; M48 12 L0 48Z; M0 48 L0 48Z"/>
+        <animate attributeName="opacity" dur="6s" repeatCount="indefinite" delay="3s"
+          keyTimes="0;0.90;0.95;1"
+          values="1; 1; 0.6; 0"/>
+      </path>
+    </defs>
+  </svg>
+
+  <!-- background -->
+  <!-- Grid background -->
+  <div class="grid-bg"></div>
+  
+  <!-- Floating orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+  <div class="orb orb-5"></div>
+
+  <!-- Floating tech icons -->
+  <div class="tech-icons">
+    <div class="tech-icon">⚡</div>
+    <div class="tech-icon">🚀</div>
+    <div class="tech-icon">💎</div>
+    <div class="tech-icon">⭐</div>
+    <div class="tech-icon">🔥</div>
+    <div class="tech-icon">✨</div>
+  </div>
+
+
+  <!-- Advanced navbar -->
+  <nav class="navbar">
+    <div class="flex items-center justify-between w-full">
+      <a href="index.html" class="navbar-brand">PTK2008</a>
+      <div class="nav-links">
+        <a href="/" class="nav-link active">Home</a>
+        <a href="/countdown" class="nav-link">Countdown</a>
+        <a href="/document" class="nav-link">Tài liệu</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="relative z-10 pt-28 space-y-10">
+    <section class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
+      <div class="animate-element slide-left intro-box no-balloon bg-white/10 border border-white/30 rounded-[15px] py-12 px-8 max-w-lg w-full min-h-[300px] mb-8 md:mb-0 md:ml-14 space-y-4 pulse-glow">
+        <div class="welcome-line">
+          <p class="demo-title text-3xl">HI, WELCOME TO PTK2008!</p>
+          <span class="wave text-3xl">👋</span>
+        </div>
+        <p class="text-xl" style="font-size: 20px; margin-top: 40px;">Facebook rô bóng trải nè=))</p>
+        <a href="https://www.facebook.com/kiet1812.dev" class="contact-button rounded-full px-4 py-1 text-base inline-block">Contact me</a>
+      </div>
+      <div class="animate-element slide-right max-w-md w-full floating">
+        <svg width="512" height="512" viewBox="0 0 512 512" fill="none" overflow="hidden" xmlns="http://www.w3.org/2000/svg">
+          <use href="#cube" x="128" y="128" stroke-width="2">
+            <animate attributeName="stroke" dur="6s" repeatCount="indefinite"
+              values="#FF9AA2;#FFB7B2;#FFDAC1;#E2F0CB;#B5EAD7;#C7CEEA;#FF9AA2"/>
+          </use>
+        </svg>
+      </div>
+    </section>
+
+    <section class="container mx-auto px-4 flex flex-col md:flex-row-reverse items-center justify-between gap-2 md:gap-4">
+      <div class="animate-element slide-right intro-box bg-white/10 border border-white/30 rounded-[15px] py-12 px-8 max-w-lg w-full min-h-[300px] mb-8 md:mb-0 md:mr-14 space-y-4">
+        <h3 class="text-3xl stagger-item">THÀNH TÍCH ĐẠT ĐƯỢC</h3>
+        <ul class="text-lg list-disc list-inside space-y-2">
+          <li class="stagger-item">Giải nhì môn tin học cấp tỉnh Thanh Hóa.</li>
+          <li class="stagger-item">Giải nhất môn tin học cấp trường THPT Như Thanh hai năm liên tiếp ở lớp 10 và 11.</li>
+          <li class="stagger-item">Top 10 khối A00 THPT Như Thanh lớp 11 (2024–2025).</li>
+        </ul>
+      </div>
+      <div class="animate-element slide-diagonal-left max-w-md w-full">
+        <canvas class="webgl"></canvas>
+      </div>
+    </section>
+
+    <section class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4" id="thanh-thao-section">
+      <div class="animate-element slide-left intro-box bg-white/10 border border-white/30 rounded-[15px] py-12 px-8 max-w-lg w-full min-h-[300px] mb-8 md:mb-0 md:ml-14 space-y-4">
+        <h3 class="text-3xl stagger-item">THÀNH THẠO CÁC MỤC SAU:</h3>
+        <ul class="text-lg list-disc list-inside space-y-2">
+          <li class="stagger-item">Thuật toán & CTDL trong lập trình thi đấu.</li>
+          <li class="stagger-item">Python, C++, HTML/CSS, JavaScript (cơ bản).</li>
+          <li class="stagger-item">Có thể tạo frontend hoàn chỉnh.</li>
+        </ul>
+      </div>
+      <div class="animate-element scale-in rotate-in max-w-md w-full">
+        <svg id="chart-svg" width="480" height="400" viewBox="0 0 480 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge> 
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.4)" />
+            </filter>
+            
+            <linearGradient id="gradient-python" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" style="stop-color: #ff6b47;" />
+              <stop offset="50%" style="stop-color: #ff8a65;" />
+              <stop offset="100%" style="stop-color: #ffab91;" />
+            </linearGradient>
+            <linearGradient id="gradient-cpp" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" style="stop-color: #42a5f5;" />
+              <stop offset="50%" style="stop-color: #64b5f6;" />
+              <stop offset="100%" style="stop-color: #90caf9;" />
+            </linearGradient>
+            <linearGradient id="gradient-htmlcss" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" style="stop-color: #ab47bc;" />
+              <stop offset="50%" style="stop-color: #ba68c8;" />
+              <stop offset="100%" style="stop-color: #ce93d8;" />
+            </linearGradient>
+            <linearGradient id="gradient-javascript" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" style="stop-color: #66bb6a;" />
+              <stop offset="50%" style="stop-color: #81c784;" />
+              <stop offset="100%" style="stop-color: #a5d6a7;" />
+            </linearGradient>
+
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+
+          <rect width="480" height="400" fill="url(#grid)" opacity="0.3"/>
+          
+          <line x1="50" y1="320" x2="430" y2="320" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-dasharray="5,5"/>
+          
+          <g class="tooltip" data-bar="python">
+            <rect id="bar-python" x="60" y="320" width="50" height="0" rx="10" ry="10"
+                  fill="url(#gradient-python)" filter="url(#shadow)" pointer-events="all">
+              <title>38%</title>
+              <animate attributeName="y" from="320" to="244" dur="2s" fill="freeze" begin="indefinite" />
+              <animate attributeName="height" from="0" to="76" dur="2s" fill="freeze" begin="indefinite" />
+            </rect>
+          </g>
+
+          <g class="tooltip" data-bar="cpp">
+            <rect id="bar-cpp" x="140" y="320" width="50" height="0" rx="10" ry="10"
+                  fill="url(#gradient-cpp)" filter="url(#shadow)" pointer-events="all">
+              <title>51%</title>
+              <animate attributeName="y" from="320" to="210" dur="2s" fill="freeze" begin="indefinite" />
+              <animate attributeName="height" from="0" to="110" dur="2s" fill="freeze" begin="indefinite" />
+            </rect>
+          </g>
+
+          <g class="tooltip" data-bar="htmlcss">
+            <rect id="bar-htmlcss" x="220" y="320" width="50" height="0" rx="10" ry="10"
+                  fill="url(#gradient-htmlcss)" filter="url(#shadow)" pointer-events="all">
+              <title>65%</title>
+              <animate attributeName="y" from="320" to="165" dur="2s" fill="freeze" begin="indefinite" />
+              <animate attributeName="height" from="0" to="155" dur="2s" fill="freeze" begin="indefinite" />
+            </rect>
+          </g>
+
+          <g class="tooltip" data-bar="javascript">
+            <rect id="bar-javascript" x="300" y="320" width="50" height="0" rx="10" ry="10"
+                  fill="url(#gradient-javascript)" filter="url(#shadow)" pointer-events="all">
+              <title>27%</title>
+              <animate attributeName="y" from="320" to="272" dur="2s" fill="freeze" begin="indefinite" />
+              <animate attributeName="height" from="0" to="48" dur="2s" fill="freeze" begin="indefinite" />
+            </rect>
+          </g>
+
+          <text id="percent-python" class="chart-label" x="85" y="234" fill="#ff6b47" font-size="16" font-weight="bold" text-anchor="middle" opacity="0">0%</text>
+          <text id="percent-cpp" class="chart-label" x="165" y="200" fill="#42a5f5" font-size="16" font-weight="bold" text-anchor="middle" opacity="0">0%</text>
+          <text id="percent-htmlcss" class="chart-label" x="245" y="155" fill="#ab47bc" font-size="16" font-weight="bold" text-anchor="middle" opacity="0">0%</text>
+          <text id="percent-javascript" class="chart-label" x="325" y="262" fill="#66bb6a" font-size="16" font-weight="bold" text-anchor="middle" opacity="0">0%</text>
+          
+          <text x="85" y="350" fill="white" font-size="14" font-weight="500" text-anchor="middle">Python</text>
+          <text x="165" y="350" fill="white" font-size="14" font-weight="500" text-anchor="middle">C++</text>
+          <text x="245" y="350" fill="white" font-size="14" font-weight="500" text-anchor="middle">HTML/CSS</text>
+          <text x="325" y="350" fill="white" font-size="14" font-weight="500" text-anchor="middle">JavaScript</text>
+
+          <circle cx="85" cy="370" r="4" fill="#ff6b47" opacity="0.7"/>
+          <circle cx="165" cy="370" r="4" fill="#42a5f5" opacity="0.7"/>
+          <circle cx="245" cy="370" r="4" fill="#ab47bc" opacity="0.7"/>
+          <circle cx="325" cy="370" r="4" fill="#66bb6a" opacity="0.7"/>
+        </svg>
+      </div>
+    </section>
+
+    <section class="container mx-auto px-4 flex flex-col md:flex-row-reverse items-center justify-between gap-2 md:gap-4">
+      <div class="animate-element slide-right intro-box bg-white/10 border border-white/30 rounded-[15px] py-12 px-8 max-w-lg w-full min-h-[300px] mb-8 md:mb-0 md:mr-14 space-y-4">
+        <h3 class="text-3xl stagger-item">MỤC TIÊU TIẾP THEO:</h3>
+        <ul class="text-lg list-disc list-inside space-y-2">
+          <li class="stagger-item">Đạt được 26.5+ điểm thi THPTQG.</li>
+          <li class="stagger-item">Đậu vào Trường Đại Học Công Nghệ Đại Học Quốc Gia Hà Nội (UET) hoặc Trường Đại Học Bưu Chính Viễn Thông (PTIT).</li>
+        </ul>
+      </div>
+      <div class="animate-element slide-diagonal-left max-w-md w-full">
+        <div class="img floating">
+          <img src="https://files.catbox.moe/cngbik.gif" alt="APS-OCTOCAT" />
+        </div>
+      </div>
+    </section>
+
+    <section class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center gap-10 md:gap-16">
+      <div class="animate-element slide-left intro-box no-balloon bank-box bg-white/10 border border-white/30 rounded-[15px] py-8 px-6 max-w-xs w-full space-y-3 text-center">
+        <div class="bank-logo">
+          <img src="https://files.catbox.moe/aq33pb.webp" alt="MB Bank Logo">
+        </div>
+        <p class="text-xl font-bold">MB BANK</p>
+        <p class="text-lg">18122008755</p>
+        <p class="text-base">PHAM TUAN KIET</p>
+        <button class="copy-btn contact-button rounded-full px-4 py-1 text-base" data-account="18122008755">Sao chép</button>
+      </div>
+      <div class="animate-element slide-right intro-box no-balloon bank-box bg-white/10 border border-white/30 rounded-[15px] py-8 px-6 max-w-xs w-full space-y-3 text-center">
+        <div class="bank-logo">
+          <img src="https://files.catbox.moe/3xhcbz.png" alt="Zalo Pay Logo">
+        </div>
+        <p class="text-xl font-bold">ZALO PAY</p>
+        <p class="text-lg">0396138606</p>
+        <p class="text-base">PHAM TUAN KIET</p>
+        <button class="copy-btn contact-button rounded-full px-4 py-1 text-base" data-account="0396138606">Sao chép</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container mx-auto px-4 py-8 text-center text-sm text-white/70">
+    <p>&copy; 2025 PTK2008. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !entry.target.classList.contains('animate-in')) {
+          entry.target.classList.add('animate-in');
+          
+          const staggerItems = entry.target.querySelectorAll('.stagger-item');
+          staggerItems.forEach((item, index) => {
+            setTimeout(() => {
+              item.classList.add('animate-in');
+            }, index * 150);
+          });
+        }
+      });
+    }, observerOptions);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const animateElements = document.querySelectorAll('.animate-element');
+      animateElements.forEach(element => {
+        observer.observe(element);
+      });
+    });
+
+    const canvas = document.querySelector('canvas.webgl');
+    const scene = new THREE.Scene();
+    const textureLoader = new THREE.TextureLoader();
+
+    const sizes = {
+      width: canvas.offsetWidth,
+      height: canvas.offsetHeight
+    };
+
+    const camera = new THREE.PerspectiveCamera(20, sizes.width / sizes.height, 0.1, 100);
+    camera.position.set(12, 5, 13);
+    scene.add(camera);
+
+    const controls = new THREE.OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.enableZoom = false;
+    controls.enablePan = false;
+    controls.minDistance = 15;
+    controls.maxDistance = 15;
+    controls.minPolarAngle = Math.PI / 4;
+    controls.maxPolarAngle = Math.PI / 2;
+    controls.minAzimuthAngle = -Math.PI / 80;
+    controls.maxAzimuthAngle = Math.PI / 2.5;
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas,
+      antialias: true,
+      alpha: true
+    });
+    renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+
+    const bakedTexture = textureLoader.load(
+      'https://rawcdn.githack.com/ricardoolivaalonso/ThreeJS-Room05/ae27bdffd31dcc5cd5a919263f8f1c6874e05400/baked.jpg'
+    );
+    bakedTexture.flipY = false;
+    bakedTexture.encoding = THREE.sRGBEncoding;
+
+    const bakedMaterial = new THREE.MeshBasicMaterial({
+      map: bakedTexture,
+      side: THREE.DoubleSide,
+    });
+
+    const loader = new THREE.GLTFLoader();
+    loader.load(
+      'https://rawcdn.githack.com/ricardoolivaalonso/ThreeJS-Room05/ae27bdffd31dcc5cd5a919263f8f1c6874e05400/model.glb',
+      (gltf) => {
+        const model = gltf.scene;
+        model.traverse(child => child.material = bakedMaterial);
+        model.scale.set(0.7, 0.7, 0.7);
+        scene.add(model);
+      }
+    );
+
+    const resizeObserver = new ResizeObserver(() => {
+      sizes.width = canvas.offsetWidth;
+      sizes.height = canvas.offsetHeight;
+      camera.aspect = sizes.width / sizes.height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(sizes.width, sizes.height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+    resizeObserver.observe(canvas);
+
+    const tick = () => {
+      controls.update();
+      renderer.render(scene, camera);
+      window.requestAnimationFrame(tick);
+    };
+    tick();
+
+    const chartSection = document.querySelector('#thanh-thao-section');
+    let chartAnimationTriggered = false;
+
+    const chartObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !chartAnimationTriggered) {
+          startBarAnimation();
+          chartAnimationTriggered = true;
+        }
+      });
+    }, { threshold: 0.3 });
+
+    chartObserver.observe(chartSection);
+
+    function startBarAnimation() {
+      const barPython = document.getElementById('bar-python');
+      const barCpp = document.getElementById('bar-cpp');
+      const barHtmlcss = document.getElementById('bar-htmlcss');
+      const barJavascript = document.getElementById('bar-javascript');
+      
+      const percentPython = document.getElementById('percent-python');
+      const percentCpp = document.getElementById('percent-cpp');
+      const percentHtmlcss = document.getElementById('percent-htmlcss');
+      const percentJavascript = document.getElementById('percent-javascript');
+      
+      function animateCounter(element, targetValue, duration, delay = 0) {
+        setTimeout(() => {
+          element.style.opacity = '1';
+          
+          let startValue = 0;
+          let startTime = performance.now();
+          
+          function updateCounter(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            const easedProgress = 1 - Math.pow(1 - progress, 3);
+            const currentValue = Math.round(startValue + (targetValue - startValue) * easedProgress);
+            
+            element.textContent = currentValue + '%';
+            
+            if (progress < 1) {
+              requestAnimationFrame(updateCounter);
+            }
+          }
+          
+          requestAnimationFrame(updateCounter);
+        }, delay);
+      }
+      
+      barPython.querySelectorAll('animate')[0].beginElement(); // y animation
+      barPython.querySelectorAll('animate')[1].beginElement(); // height animation
+      
+      barCpp.querySelectorAll('animate')[0].beginElement();
+      barCpp.querySelectorAll('animate')[1].beginElement();
+      
+      barHtmlcss.querySelectorAll('animate')[0].beginElement();
+      barHtmlcss.querySelectorAll('animate')[1].beginElement();
+      
+      barJavascript.querySelectorAll('animate')[0].beginElement();
+      barJavascript.querySelectorAll('animate')[1].beginElement();
+      
+      animateCounter(percentPython, 38, 2000, 0);
+      animateCounter(percentCpp, 51, 2000, 200);
+      animateCounter(percentHtmlcss, 65, 2000, 400);
+      animateCounter(percentJavascript, 27, 2000, 600);
+    }
+
+    const copyButtons = document.querySelectorAll('.copy-btn');
+    copyButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const account = btn.dataset.account;
+        navigator.clipboard.writeText(account).then(() => {
+          btn.classList.add('copied');
+          btn.textContent = 'Đã sao chép';
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.textContent = 'Sao chép';
+          }, 3000);
+        }).catch(err => {
+          console.error('Failed to copy: ', err);
+        });
+      });
+    });
+
+    const barData = {
+      python: { 
+        element: document.getElementById('bar-python'), 
+        label: document.getElementById('percent-python'),
+        baseLabelY: 234,
+        baseHeight: 76
+      },
+      cpp: { 
+        element: document.getElementById('bar-cpp'), 
+        label: document.getElementById('percent-cpp'),
+        baseLabelY: 200,
+        baseHeight: 110
+      },
+      htmlcss: { 
+        element: document.getElementById('bar-htmlcss'), 
+        label: document.getElementById('percent-htmlcss'),
+        baseLabelY: 155,
+        baseHeight: 155
+      },
+      javascript: { 
+        element: document.getElementById('bar-javascript'), 
+        label: document.getElementById('percent-javascript'),
+        baseLabelY: 262,
+        baseHeight: 48
+      }
+    };
+
+    const tooltipGroups = document.querySelectorAll('.tooltip');
+
+    tooltipGroups.forEach(group => {
+      const barType = group.getAttribute('data-bar');
+      
+      // Function to animate label position smoothly
+      function animateLabelToPosition(label, startY, targetY, duration = 400) {
+        const startTime = performance.now();
+        
+        function animate(currentTime) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          
+          // Easing function (cubic-bezier equivalent)
+          const easedProgress = progress < 0.5 
+            ? 2 * progress * progress 
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+          
+          const currentY = startY + (targetY - startY) * easedProgress;
+          label.setAttribute('y', currentY);
+          
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          }
+        }
+        
+        requestAnimationFrame(animate);
+      }
+      
+      group.addEventListener('mouseenter', () => {
+        Object.keys(barData).forEach(key => {
+          const data = barData[key];
+          const isHovered = key === barType;
+          
+          if (isHovered) {
+            // Bar animation
+            data.element.style.transform = 'scaleY(1.2)';
+            data.element.style.opacity = '1';
+            data.element.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            // Label smooth animation - di chuyển lên trên
+            const currentY = parseFloat(data.label.getAttribute('y')) || data.baseLabelY;
+            const targetY = data.baseLabelY - (0.2 * data.baseHeight);
+            animateLabelToPosition(data.label, currentY, targetY, 400);
+            
+            data.label.style.fontWeight = '900';
+            data.label.style.opacity = '1';
+          } else {
+            // Bar animation
+            data.element.style.transform = 'scaleY(0.8)';
+            data.element.style.opacity = '0.7';
+            data.element.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            // Label smooth animation - di chuyển xuống dưới
+            const currentY = parseFloat(data.label.getAttribute('y')) || data.baseLabelY;
+            const targetY = data.baseLabelY + (0.2 * data.baseHeight);
+            animateLabelToPosition(data.label, currentY, targetY, 400);
+            
+            data.label.style.opacity = '0.7';
+            data.label.style.fontWeight = 'bold';
+          }
+        });
+      });
+      
+      group.addEventListener('mouseleave', () => {
+        Object.keys(barData).forEach(key => {
+          const data = barData[key];
+          
+          // Reset bar
+          data.element.style.transform = 'scaleY(1)';
+          data.element.style.opacity = '1';
+          data.element.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+          
+          // Reset label về vị trí gốc với animation mượt mà
+          const currentY = parseFloat(data.label.getAttribute('y')) || data.baseLabelY;
+          animateLabelToPosition(data.label, currentY, data.baseLabelY, 400);
+          
+          data.label.style.opacity = '1';
+          data.label.style.fontWeight = 'bold';
+        });
+      });
+    });
+  </script>
+  <script src="{{ url_for('static' , filename='src/cursor/cursor.js' )}}"></script>
+</body>
+</html>
